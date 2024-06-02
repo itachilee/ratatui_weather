@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    model::{CurrentlyEditing, Model},
+    model::Model,
     reducer::{reducer, Action},
 };
 

@@ -1,8 +1,8 @@
-use std::io;
 
-use crossterm::event;
+
+
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap};
+use widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap};
 
 use crate::{
     model::{CurrentScreen, CurrentlyEditing, Model},
@@ -22,11 +22,11 @@ fn centered_rect(precent_x: u16, precent_y: u16, r: Rect) -> Rect {
     Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
-            ([
+            [
                 Constraint::Percentage((100 - precent_x) / 2),
                 Constraint::Percentage(precent_x),
                 Constraint::Percentage((100 - precent_x) / 2),
-            ]),
+            ],
         )
         .split(popup_layout[1])[1]
 }
