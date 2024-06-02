@@ -4,11 +4,10 @@ use std::{
 };
 
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
