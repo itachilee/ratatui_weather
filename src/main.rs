@@ -6,21 +6,19 @@ use std::{
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
-    terminal::{
-        self, disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
-    },
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
-    backend::{self, Backend, CrosstermBackend},
+    backend::{Backend, CrosstermBackend},
     Terminal,
 };
-use ratatui_waether::{model::Model, predule::*};
-use ratatui_waether::{
-    model::{CurrentScreen, CurrentlyEditing},
+use ratatui_weather::{
+    model::CurrentScreen,
     reducer::{Action, EditAction},
     store::Dispatcher,
 };
+use ratatui_weather::{model::Model, predule::*};
 fn main() -> std::io::Result<()> {
     println!("Hello, world!");
 

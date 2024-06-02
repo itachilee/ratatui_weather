@@ -5,7 +5,6 @@ pub mod ui;
 
 pub mod predule {
     pub use crate::ui::*;
-    pub use crossterm::*;
     pub use ratatui::prelude::*;
     pub use ratatui::*;
 }

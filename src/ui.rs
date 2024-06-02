@@ -1,6 +1,6 @@
 use std::io;
 
-use event::{Event, KeyCode, KeyEventKind};
+use crossterm::event;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use widgets::{Block, BorderType, Borders, Clear, List, ListItem, Paragraph, Wrap};
 
