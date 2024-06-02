@@ -30,7 +30,7 @@ fn main() -> std::io::Result<()> {
 
     let state = Arc::new(Mutex::new(Model::new()));
     let dispatcher = Dispatcher::new(Arc::clone(&state));
-    run_app(&mut terminal, &state, &dispatcher);
+    let res = run_app(&mut terminal, &state, &dispatcher);
 
     disable_raw_mode()?;
 
@@ -41,13 +41,13 @@ fn main() -> std::io::Result<()> {
     )?;
     terminal.show_cursor()?;
 
-    // if let Ok(do_print) = res {
-    //     if do_print {
-    //         app.print_json()?;
-    //     }
-    // } else if let Err(err) = res {
-    //     println!("{err:?}");
-    // }
+    if let Ok(do_print) = res {
+        if do_print {
+            state.lock().unwrap().print_json()?;
+        }
+    } else if let Err(err) = res {
+        println!("{err:?}");
+    }
 
     Ok(())
 }
@@ -57,18 +57,18 @@ pub fn run_app<B: Backend>(
     state: &Arc<Mutex<Model>>,
     dispatcher: &Dispatcher,
     // ) -> std::io::Result<bool> {
-) {
+) -> std::io::Result<bool> {
     loop {
         {
             let state = state.lock().unwrap();
             if state.should_exit {
-                break;
+                return Ok(state.should_print);
             }
-            terminal.draw(|f| ui(f, &*state)).unwrap();
+            terminal.draw(|f| ui(f, &*state))?;
         }
 
-        if event::poll(Duration::from_millis(200)).unwrap() {
-            if let Event::Key(key) = event::read().unwrap() {
+        if event::poll(Duration::from_millis(200))? {
+            if let Event::Key(key) = event::read()? {
                 let state = state.lock().unwrap();
                 if key.kind == event::KeyEventKind::Release {
                     continue;
@@ -76,9 +76,13 @@ pub fn run_app<B: Backend>(
 
                 match state.current_screen {
                     CurrentScreen::Main => match key.code {
-                        KeyCode::Char('e') => dispatcher.dispatch(Action::ChangeToEditMode),
+                        KeyCode::Char('e') => {
+                            dispatcher.dispatch(Action::ChangeScreen(CurrentScreen::Editing))
+                        }
 
-                        KeyCode::Char('q') => dispatcher.dispatch(Action::ChangeToExitMode),
+                        KeyCode::Char('q') => {
+                            dispatcher.dispatch(Action::ChangeScreen(CurrentScreen::Exiting))
+                        }
                         // app.current_screen = CurrentScreen::Exiting;
                         _ => {}
                     },

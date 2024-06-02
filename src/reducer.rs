@@ -11,24 +11,22 @@ pub enum EditAction {
 }
 
 pub enum Action {
-    ChangeToMainMode,
+    ChangeScreen(CurrentScreen),
     MainMode,
-    ChangeToEditMode,
     EditMode(EditAction),
-    ChangeToExitMode,
     ExitMode(KeyCode),
 }
 
 pub fn reducer(state: &mut Model, action: Action) {
     match action {
-        Action::ChangeToMainMode => {
+        Action::ChangeScreen(CurrentScreen::Main) => {
             state.current_screen = CurrentScreen::Main;
         }
-        Action::ChangeToEditMode => {
+        Action::ChangeScreen(CurrentScreen::Editing) => {
             state.current_screen = CurrentScreen::Editing;
             state.current_editing = Some(CurrentlyEditing::Key);
         }
-        Action::ChangeToExitMode => {
+        Action::ChangeScreen(CurrentScreen::Exiting) => {
             state.current_screen = CurrentScreen::Exiting;
         }
         Action::MainMode => {}
@@ -84,6 +82,7 @@ pub fn reducer(state: &mut Model, action: Action) {
         Action::ExitMode(key) => match key {
             KeyCode::Char('y') => {
                 state.should_exit = true;
+                state.should_print = true;
             }
             KeyCode::Char('n') | KeyCode::Char('q') => {
                 state.should_exit = false;

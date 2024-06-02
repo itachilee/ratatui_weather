@@ -17,6 +17,7 @@ pub struct Model {
     pub current_screen: CurrentScreen,
     pub current_editing: Option<CurrentlyEditing>,
     pub should_exit: bool,
+    pub should_print: bool,
 }
 
 impl Model {
@@ -28,6 +29,7 @@ impl Model {
             current_screen: CurrentScreen::Main,
             current_editing: None,
             should_exit: false,
+            should_print: false,
         }
     }
 
