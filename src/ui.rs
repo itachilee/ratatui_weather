@@ -1,8 +1,5 @@
-
-
-
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap};
+use widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap};
 
 use crate::{
     model::{CurrentScreen, CurrentlyEditing, Model},
@@ -21,13 +18,11 @@ fn centered_rect(precent_x: u16, precent_y: u16, r: Rect) -> Rect {
 
     Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage((100 - precent_x) / 2),
-                Constraint::Percentage(precent_x),
-                Constraint::Percentage((100 - precent_x) / 2),
-            ],
-        )
+        .constraints([
+            Constraint::Percentage((100 - precent_x) / 2),
+            Constraint::Percentage(precent_x),
+            Constraint::Percentage((100 - precent_x) / 2),
+        ])
         .split(popup_layout[1])[1]
 }
 
@@ -50,6 +45,7 @@ pub fn ui(f: &mut Frame, app: &Model) {
 
     f.render_widget(title, chunks[0]);
 
+    let mut state = ListState::default();
     let mut list_items = Vec::<ListItem>::new();
 
     for key in app.pairs.keys() {
@@ -59,9 +55,13 @@ pub fn ui(f: &mut Frame, app: &Model) {
         ))));
     }
 
-    let list = List::new(list_items);
+    let list = List::new(list_items)
+        .block(Block::bordered().title("List"))
+        .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
+        .highlight_symbol(">>")
+        .repeat_highlight_symbol(true);
 
-    f.render_widget(list, chunks[1]);
+    f.render_stateful_widget(list, chunks[1], &mut state);
 
     let current_navigation_text = vec![
         match app.current_screen {

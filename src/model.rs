@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use ratatui::widgets::ListState;
+
 pub enum CurrentScreen {
     Main,
     Editing,
@@ -18,6 +20,7 @@ pub struct Model {
     pub current_editing: Option<CurrentlyEditing>,
     pub should_exit: bool,
     pub should_print: bool,
+    pub list_state: Option<ListState>,
 }
 
 impl Model {
@@ -30,6 +33,7 @@ impl Model {
             current_editing: None,
             should_exit: false,
             should_print: false,
+            list_state: None,
         }
     }
 

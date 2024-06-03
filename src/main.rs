@@ -14,7 +14,7 @@ use ratatui::{
 };
 use ratatui_weather::{
     model::CurrentScreen,
-    reducer::{Action, EditAction},
+    reducer::{Action, EditAction, ListAction},
     store::Dispatcher,
 };
 use ratatui_weather::{model::Model, predule::*};
@@ -83,6 +83,7 @@ pub fn run_app<B: Backend>(
                         KeyCode::Char('q') => {
                             dispatcher.dispatch(Action::ChangeScreen(CurrentScreen::Exiting))
                         }
+                        KeyCode::Down => dispatcher.dispatch(Action::MainMode(ListAction::Down)),
                         // app.current_screen = CurrentScreen::Exiting;
                         _ => {}
                     },

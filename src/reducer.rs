@@ -10,9 +10,15 @@ pub enum EditAction {
     Esc,
 }
 
+pub enum ListAction {
+    Up,
+    Down,
+    Edit,
+}
+
 pub enum Action {
     ChangeScreen(CurrentScreen),
-    MainMode,
+    MainMode(ListAction),
     EditMode(EditAction),
     ExitMode(KeyCode),
 }
@@ -29,7 +35,10 @@ pub fn reducer(state: &mut Model, action: Action) {
         Action::ChangeScreen(CurrentScreen::Exiting) => {
             state.current_screen = CurrentScreen::Exiting;
         }
-        Action::MainMode => {}
+        Action::MainMode(list_action) => match list_action {
+            // ListAction::Down => state.,
+            _ => {}
+        },
         Action::EditMode(action) => match action {
             EditAction::Tab => {
                 state.toggle_editing();
