@@ -2,7 +2,7 @@ use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap};
 
 use crate::{
-    model::{CurrentScreen, CurrentlyEditing, Model},
+    model::model::{CurrentScreen, CurrentlyEditing, Model},
     predule::*,
 };
 

@@ -12,12 +12,12 @@ use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
-use ratatui_weather::{model::model::Model, predule::*};
 use ratatui_weather::{
-    model::CurrentScreen,
+    model::model::CurrentScreen,
     reducer::{Action, EditAction, ListAction},
     store::Dispatcher,
 };
+use ratatui_weather::{model::model::Model, predule::*};
 fn main() -> std::io::Result<()> {
     println!("starting weather app...");
 
