@@ -2,16 +2,10 @@ use std::collections::HashMap;
 
 use ratatui::widgets::ListState;
 
-pub enum CurrentScreen {
-    Main,
-    Editing,
-    Exiting,
-}
-
-pub enum CurrentlyEditing {
-    Key,
-    Value,
-}
+use crate::model::event::{AppEvent, EventListener, InputField};
+use crate::model::traits::{IModel, StateQuery};
+use crate::model::CurrentScreen;
+use crate::model::CurrentlyEditing;
 pub struct Model {
     pub key_input: String,
     pub value_input: String,
@@ -60,5 +54,44 @@ impl Model {
         println!("{}", json);
 
         Ok(())
+    }
+}
+
+impl EventListener for Model {
+    fn on_event(&mut self, event: AppEvent) {
+        println!("Model received event: {:?}", event);
+
+        match event {
+            AppEvent::ScreenChanged(screen) => {
+                println!("Model 收到 ScreenChanged 事件: {:?}", screen);
+                self.current_screen = screen;
+            }
+            AppEvent::EditingStateChanged(editing_state) => {
+                self.current_editing = editing_state;
+            }
+            AppEvent::InputChanged(value, field) => match field {
+                InputField::Key => self.key_input.push_str(&value),
+                InputField::Value => self.value_input.push_str(&value),
+            },
+            AppEvent::SaveRequested => {
+                self.save_key_value();
+            }
+            AppEvent::ExitRequested(should_exit) => {
+                self.should_exit = should_exit;
+                self.should_print = should_exit;
+            }
+        }
+    }
+}
+
+impl StateQuery for Model {
+    fn get_editing_state(&self) -> Option<CurrentlyEditing> {
+        self.current_editing.clone()
+    }
+}
+
+impl IModel for Model {
+    fn should_exit(&self) -> bool {
+        self.should_exit
     }
 }

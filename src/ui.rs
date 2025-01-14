@@ -1,10 +1,11 @@
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap};
-
+use crate::model::traits::IModel;
 use crate::{
-    model::model::{CurrentScreen, CurrentlyEditing, Model},
+    model::model::Model,
+    model::{CurrentScreen, CurrentlyEditing},
     predule::*,
 };
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap};
 
 fn centered_rect(precent_x: u16, precent_y: u16, r: Rect) -> Rect {
     let popup_layout = Layout::default()

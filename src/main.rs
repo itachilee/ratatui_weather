@@ -12,85 +12,87 @@ use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
-use ratatui_weather::{
-    model::model::CurrentScreen,
+use ratatui_weather::model::{
+    mediator,
     reducer::{Action, EditAction, ListAction},
-    store::Dispatcher,
+    CurrentScreen,
 };
-use ratatui_weather::{model::model::Model, predule::*};
+use ratatui_weather::{
+    model::{mediator::AppMediator, model::Model, reducer::ActionReducer},
+    predule::*,
+};
+
+use ratatui_weather::model::mediator::Mediator;
 fn main() -> std::io::Result<()> {
     println!("starting weather app...");
 
     let mut terminal = ratatui::init();
 
-    let state = Arc::new(Mutex::new(Model::new()));
-    let dispatcher = Dispatcher::new(Arc::clone(&state));
-    let res = run_app(&mut terminal, &state, &dispatcher);
+    let mut mediator = Box::new(AppMediator::new());
+    let model = Model::new();
+    let model = Box::new(model);
+    mediator.register_listener(model.clone());
+    let mut reducer = ActionReducer::new(mediator, &model);
+
+    let res = run_app(&mut terminal, &mut reducer);
     ratatui::restore();
-    if let Ok(do_print) = res {
-        if do_print {
-            state.lock().unwrap().print_json()?;
-        }
-    } else if let Err(err) = res {
-        println!("{err:?}");
-    }
 
     Ok(())
 }
 
 pub fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
-    state: &Arc<Mutex<Model>>,
-    dispatcher: &Dispatcher,
+    reducer: &mut ActionReducer,
 ) -> std::io::Result<bool> {
     loop {
         {
-            let state = state.lock().unwrap();
+            let state = reducer.get_model();
+            let state = state.as_ref();
             if state.should_exit {
                 return Ok(state.should_print);
             }
-            terminal.draw(|f| ui(f, &*state))?;
+            terminal.draw(|f| ui(f, state))?;
         }
 
         if event::poll(Duration::from_millis(200))? {
             if let Event::Key(key) = event::read()? {
-                let state = state.lock().unwrap();
+                println!("Received key event: {:?}", key); // 添加日志
                 if key.kind == event::KeyEventKind::Release {
                     continue;
                 }
 
-                match state.current_screen {
+                let current_screen = &reducer.get_model().current_screen;
+                match current_screen {
                     CurrentScreen::Main => match key.code {
                         KeyCode::Char('e') => {
-                            dispatcher.dispatch(Action::ChangeScreen(CurrentScreen::Editing))
+                            println!("Triggering edit screen"); // 添加日志
+                            reducer.reduce(Action::ChangeScreen(CurrentScreen::Editing));
                         }
-
                         KeyCode::Char('q') => {
-                            dispatcher.dispatch(Action::ChangeScreen(CurrentScreen::Exiting))
+                            reducer.reduce(Action::ChangeScreen(CurrentScreen::Exiting));
                         }
-                        KeyCode::Down => dispatcher.dispatch(Action::MainMode(ListAction::Down)),
-                        // app.current_screen = CurrentScreen::Exiting;
+                        KeyCode::Down => reducer.reduce(Action::MainMode(ListAction::Down)),
                         _ => {}
                     },
                     CurrentScreen::Editing if key.kind == KeyEventKind::Press => match key.code {
                         KeyCode::Enter => {
-                            dispatcher.dispatch(Action::EditMode(EditAction::Enter));
+                            reducer.reduce(Action::EditMode(EditAction::Enter));
                         }
                         KeyCode::Backspace => {
-                            dispatcher.dispatch(Action::EditMode(EditAction::Backspace));
+                            reducer.reduce(Action::EditMode(EditAction::Backspace));
                         }
                         KeyCode::Esc => {
-                            dispatcher.dispatch(Action::EditMode(EditAction::Esc));
+                            reducer.reduce(Action::EditMode(EditAction::Esc));
                         }
                         KeyCode::Tab => {
-                            dispatcher.dispatch(Action::EditMode(EditAction::Tab));
+                            reducer.reduce(Action::EditMode(EditAction::Tab));
                         }
                         KeyCode::Char(value) => {
-                            dispatcher.dispatch(Action::EditMode(EditAction::Char(value)));
+                            reducer.reduce(Action::EditMode(EditAction::Char(value)));
                         }
                         _ => {}
                     },
-                    CurrentScreen::Exiting => dispatcher.dispatch(Action::ExitMode(key.code)),
+                    CurrentScreen::Exiting => reducer.reduce(Action::ExitMode(key.code)),
                     _ => {}
                 }
             }
