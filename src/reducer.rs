@@ -1,6 +1,6 @@
 use crossterm::event::KeyCode;
 
-use crate::model::{CurrentScreen, CurrentlyEditing, Model};
+use crate::model::model::{CurrentScreen, CurrentlyEditing, Model};
 
 pub enum EditAction {
     Char(char),

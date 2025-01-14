@@ -34,7 +34,7 @@ pub fn ui(f: &mut Frame, app: &Model) {
             Constraint::Min(1),
             Constraint::Length(3),
         ])
-        .split(f.size());
+        .split(f.area());
 
     let title_block = Block::default()
         .borders(Borders::ALL)

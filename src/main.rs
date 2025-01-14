@@ -12,35 +12,21 @@ use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
+use ratatui_weather::{model::model::Model, predule::*};
 use ratatui_weather::{
     model::CurrentScreen,
     reducer::{Action, EditAction, ListAction},
     store::Dispatcher,
 };
-use ratatui_weather::{model::Model, predule::*};
 fn main() -> std::io::Result<()> {
-    println!("Hello, world!");
+    println!("starting weather app...");
 
-    enable_raw_mode()?;
-    let mut stderr = std::io::stderr();
-    execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
-
-    let backend = CrosstermBackend::new(stderr);
-    let mut terminal = Terminal::new(backend)?;
+    let mut terminal = ratatui::init();
 
     let state = Arc::new(Mutex::new(Model::new()));
     let dispatcher = Dispatcher::new(Arc::clone(&state));
     let res = run_app(&mut terminal, &state, &dispatcher);
-
-    disable_raw_mode()?;
-
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
-
+    ratatui::restore();
     if let Ok(do_print) = res {
         if do_print {
             state.lock().unwrap().print_json()?;
@@ -56,7 +42,6 @@ pub fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
     state: &Arc<Mutex<Model>>,
     dispatcher: &Dispatcher,
-    // ) -> std::io::Result<bool> {
 ) -> std::io::Result<bool> {
     loop {
         {

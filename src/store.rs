@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    model::Model,
+    model::model::Model,
     reducer::{reducer, Action},
 };
 
