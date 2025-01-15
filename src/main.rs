@@ -3,99 +3,127 @@ use std::{
     time::Duration,
 };
 
-use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
+use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
-    backend::{Backend, CrosstermBackend},
+    layout::{Constraint, Direction, Layout},
+    prelude::Backend,
+    widgets::{Block, Borders, Paragraph},
     Terminal,
 };
-use ratatui_weather::model::{
-    mediator,
-    reducer::{Action, EditAction, ListAction},
-    CurrentScreen,
-};
-use ratatui_weather::{
-    model::{mediator::AppMediator, model::Model, reducer::ActionReducer},
-    predule::*,
-};
+use ratatui_weather::redis_db;
+use tokio::{sync::mpsc, task};
 
-use ratatui_weather::model::mediator::Mediator;
-fn main() -> std::io::Result<()> {
-    println!("starting weather app...");
-
-    let mut terminal = ratatui::init();
-
-    let mut mediator = Box::new(AppMediator::new());
-    let model = Model::new();
-    let model = Box::new(model);
-    mediator.register_listener(model.clone());
-    let mut reducer = ActionReducer::new(mediator, &model);
-
-    let res = run_app(&mut terminal, &mut reducer);
-    ratatui::restore();
-
-    Ok(())
+#[derive(Debug, Clone)]
+struct AppState {
+    message: String,
+    data: Option<String>,
+    count: u32,
 }
 
-pub fn run_app<B: Backend>(
-    terminal: &mut Terminal<B>,
-    reducer: &mut ActionReducer,
-) -> std::io::Result<bool> {
-    loop {
-        {
-            let state = reducer.get_model();
-            let state = state.as_ref();
-            if state.should_exit {
-                return Ok(state.should_print);
-            }
-            terminal.draw(|f| ui(f, state))?;
+impl AppState {
+    fn new() -> Self {
+        AppState {
+            message: "Press Enter to fetch data...".to_string(),
+            data: None,
+            count: 0,
         }
+    }
+}
 
-        if event::poll(Duration::from_millis(200))? {
+async fn fetch_data() -> String {
+    println!("fetch_data");
+    // Simulating an async API call
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    let hitokoto = redis_db::hitokoto().await.unwrap();
+    hitokoto
+
+    // "Fetched data from the API!".to_string()
+}
+
+async fn app<B: Backend>(
+    terminal: &mut Terminal<B>,
+    state: Arc<Mutex<AppState>>,
+    tx: mpsc::Sender<()>,
+) -> std::io::Result<()> {
+    loop {
+        if event::poll(Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
-                println!("Received key event: {:?}", key); // 添加日志
                 if key.kind == event::KeyEventKind::Release {
                     continue;
                 }
+                match key.code {
+                    KeyCode::Enter => {
+                        let tx = tx.clone();
+                        let state = state.clone();
+                        task::spawn(async move {
+                            let data = fetch_data().await;
 
-                let current_screen = &reducer.get_model().current_screen;
-                match current_screen {
-                    CurrentScreen::Main => match key.code {
-                        KeyCode::Char('e') => {
-                            println!("Triggering edit screen"); // 添加日志
-                            reducer.reduce(Action::ChangeScreen(CurrentScreen::Editing));
-                        }
-                        KeyCode::Char('q') => {
-                            reducer.reduce(Action::ChangeScreen(CurrentScreen::Exiting));
-                        }
-                        KeyCode::Down => reducer.reduce(Action::MainMode(ListAction::Down)),
-                        _ => {}
-                    },
-                    CurrentScreen::Editing if key.kind == KeyEventKind::Press => match key.code {
-                        KeyCode::Enter => {
-                            reducer.reduce(Action::EditMode(EditAction::Enter));
-                        }
-                        KeyCode::Backspace => {
-                            reducer.reduce(Action::EditMode(EditAction::Backspace));
-                        }
-                        KeyCode::Esc => {
-                            reducer.reduce(Action::EditMode(EditAction::Esc));
-                        }
-                        KeyCode::Tab => {
-                            reducer.reduce(Action::EditMode(EditAction::Tab));
-                        }
-                        KeyCode::Char(value) => {
-                            reducer.reduce(Action::EditMode(EditAction::Char(value)));
-                        }
-                        _ => {}
-                    },
-                    CurrentScreen::Exiting => reducer.reduce(Action::ExitMode(key.code)),
+                            {
+                                let mut state = state.lock().unwrap();
+                                println!("data: {}", data.clone());
+
+                                state.data = Some(data);
+                                state.message = "Data fetched successfully!".to_string();
+                                println!("data: {:?}", state);
+                                state.count += 1;
+                            }
+                            tx.send(()).await.ok();
+                            // let state = state.lock().unwrap();
+                            // println!("send {}", state.count);
+                        });
+                    }
+                    KeyCode::Char('q') => return Ok(()), // Quit
                     _ => {}
                 }
             }
         }
+
+        terminal.draw(|f| {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Length(3), Constraint::Min(1)].as_ref())
+                .split(f.area());
+
+            let state = state.lock().unwrap();
+            let paragraph = Paragraph::new(state.message.clone());
+            let data_block = Paragraph::new(
+                state
+                    .data
+                    .clone()
+                    .unwrap_or_else(|| "No data yet.".to_string()),
+            )
+            .block(Block::default().borders(Borders::ALL).title("Data"));
+
+            f.render_widget(paragraph, chunks[0]);
+            f.render_widget(data_block, chunks[1]);
+        })?;
     }
+}
+
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    let mut terminal = ratatui::init();
+    terminal.clear()?;
+
+    let state = Arc::new(Mutex::new(AppState::new()));
+    let (tx, mut rx) = mpsc::channel(1);
+
+    let ui_state = state.clone();
+    let ui_tx = tx.clone();
+
+    tokio::spawn(async move {
+        let mut count = 0;
+        while rx.recv().await.is_some() {
+            count += 1;
+
+            println!("recv {}", count);
+            // let _ = ui_tx.send(()).await;
+        }
+    });
+
+    let res = app(&mut terminal, ui_state, tx.clone()).await;
+
+    ratatui::restore();
+
+    res
 }

@@ -22,6 +22,33 @@ fn set_an_integer() -> redis::RedisResult<()> {
     Ok(res)
 }
 
+pub async fn hitokoto() -> std::io::Result<String> {
+    let client = reqwest::Client::new()
+        .get("https://v1.hitokoto.cn/")
+        .send()
+        .await
+        .unwrap();
+
+    let body = client.text().await.unwrap();
+    println!("{}", body);
+    Ok(body)
+}
+
+async fn set_hitokoto() -> std::io::Result<()> {
+    let client = redis::Client::open("redis://:000415@192.168.0.49/").unwrap();
+    let mut con = client.get_connection().unwrap();
+    let hitokoto = hitokoto().await.unwrap();
+    let res = con.set("hitokoto", hitokoto).unwrap();
+    Ok(res)
+}
+
+async fn get_hitokoto() -> std::io::Result<String> {
+    let client = redis::Client::open("redis://:000415@192.168.0.49/").unwrap();
+    let mut con = client.get_connection().unwrap();
+    let res = con.get("hitokoto").unwrap();
+    Ok(res)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
