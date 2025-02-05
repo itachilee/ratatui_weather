@@ -1,8 +1,12 @@
+use elasticsearch::Elasticsearch;
+use futures::lock::Mutex;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct AppState {
     pub deepseek_api_key: String,
+    pub es_client: Arc<Mutex<Elasticsearch>>,
 }
 
 #[derive(Debug, Serialize)]
