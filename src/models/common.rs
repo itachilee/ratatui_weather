@@ -1,4 +1,5 @@
-use elasticsearch::Elasticsearch;
+use crate::config;
+use elasticsearch::{http::transport::Transport, Elasticsearch};
 use futures::lock::Mutex;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -7,6 +8,40 @@ use std::sync::Arc;
 pub struct AppState {
     pub deepseek_api_key: String,
     pub es_client: Arc<Mutex<Elasticsearch>>,
+    // 这里使用连接池
+    pub pg_db: Arc<PgPool>,
+}
+impl AppState {
+    pub fn new() -> Self {
+        let app_state = Self {
+            deepseek_api_key: config::init_config(),
+            es_client: Arc::new(Mutex::new(establish_esconnection())),
+            pg_db: Arc::new(establish_pgconnection()),
+        };
+        app_state
+    }
+}
+
+use diesel::pg::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool};
+use dotenv::dotenv;
+use std::env;
+pub type PgPool = Pool<ConnectionManager<PgConnection>>;
+pub fn establish_pgconnection() -> PgPool {
+    dotenv().ok();
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool")
+}
+
+pub fn establish_esconnection() -> Elasticsearch {
+    dotenv().ok();
+    let es_url = env::var("ELASTICSEARCH_HOST").expect("ELASTICSEARCH_HOST must be set");
+    let transport = Transport::single_node("http://192.168.0.5:9200").unwrap();
+    let client = Elasticsearch::new(transport);
+    client
 }
 
 #[derive(Debug, Serialize)]

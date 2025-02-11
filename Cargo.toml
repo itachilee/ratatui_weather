@@ -29,4 +29,8 @@ sha1 = "0.10"
 serde-xml-rs = "0.6.0"
 urlencoding = "2.1"
 rand = "0.9.0"
+# openssl = { version = "0.10", features = ["vendored"] }
+xml-rs = "0.8.25"
+diesel = { version = "2.2.0", features = ["postgres", "r2d2"] }
+# surrealdb = "2.1.4"
 # wechat = { path = "vendor/wechat-rs" }

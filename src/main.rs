@@ -1,4 +1,5 @@
 mod config;
+mod db;
 mod handlers;
 mod middleware;
 mod models;
@@ -6,26 +7,17 @@ mod routes;
 mod services;
 
 use actix_web::{middleware::Logger, web, App, HttpServer};
-use elasticsearch::{http::transport::Transport, Elasticsearch};
-use futures::lock::Mutex;
+
 use middleware::request_log::RequestLogger;
 use models::AppState;
-use std::sync::Arc;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // 初始化日志
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    // 获取配置
-    let deepseek_api_key = config::init_config();
-    let transport = Transport::single_node("http://192.168.0.5:9200").unwrap();
-    let client = Elasticsearch::new(transport);
     // 创建应用状态
-    let app_state = web::Data::new(AppState {
-        deepseek_api_key,
-        es_client: Arc::new(Mutex::new(client)),
-    });
+    let app_state = web::Data::new(AppState::new());
 
     println!("Server running at http://localhost:8080");
 
