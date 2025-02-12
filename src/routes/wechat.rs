@@ -6,7 +6,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         web::scope("/api/v1")
             .service(health::health_check)
             .service(chat::chat)
-            .service(post::test), // .service(wechat::verify_server)
-                                  // .service(wechat::handle_message),
+            .service(post::query)
+            .service(post::create_post)
+            .service(post::update_post)
+            .service(post::delete_post),
     );
 }
