@@ -130,21 +130,25 @@ async fn handle_connection(
         //     String::from_utf8_lossy(data)
         // );
 
-        let hex_data = bytes_to_hex(data);
-        println!("Received data in hex: {}", hex_data);
+        // let hex_data = bytes_to_hex(data);
+        // println!("Received data in hex: {}", hex_data);
 
         let sensor_type = get_sensor_type_enum(&addr);
         match sensor_type {
             SensorType::Oxygen => {
-                let t_parser = OxygenSensorParser;
-                match process_sensor_data(&t_parser, data) {
+                let parser = OxygenSensorParser;
+                match process_sensor_data(&parser, &addr.ip(), data) {
                     Ok(data) => {
-                        println!("氧气传感器数据: {:?}", data);
+                        println!("{} | 氧气传感器数据: {:?}", chrono::Local::now(), data);
                         let threshold = OxygenThreshold::new();
                         // 检查温度传感器预警
-                        let temp_warning = handle_warning(SensorType::Oxygen, &data, &threshold);
-                        if temp_warning {
-                            println!("温度传感器触发预警！");
+                        if let Some(warning) = handle_warning(SensorType::Oxygen, &data, &threshold)
+                        {
+                            println!(
+                                "{} | 氧气传感器数据触发预警！预警信息: {:?}",
+                                chrono::Local::now(),
+                                warning
+                            );
                         }
                     }
                     Err(err) => eprintln!("氧气传感器解析错误: {}", err),
@@ -153,7 +157,8 @@ async fn handle_connection(
             _ => {}
         }
 
-        stream.write_all(b"Data received").await?;
+        // dont need to respond
+        // stream.write_all(b"Data received").await?;
     }
     Ok(())
 }
@@ -161,9 +166,10 @@ async fn handle_connection(
 // 统一处理传感器数据
 pub fn process_sensor_data(
     parser: &dyn SensorParser,
+    addr: &IpAddr,
     data: &[u8],
 ) -> Result<SensorData, &'static str> {
-    parser.parse(data)
+    parser.parse(addr, data)
 }
 
 pub async fn run_server() -> Result<(), Box<dyn Error>> {

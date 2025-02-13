@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use crate::db::connection::*;
 use crate::db::models::*;
 use crate::db::schema::busdevtypemanager::dsl::*;
@@ -12,18 +14,19 @@ pub struct SensorData {
     pub value: f64,
     pub unit: String,
     pub status: String,
+    pub dev_ip: String,
 }
 
 // 定义传感器解析 trait
 pub trait SensorParser {
-    fn parse(&self, data: &[u8]) -> Result<SensorData, &'static str>;
+    fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str>;
 }
 
 // 风速传感器解析器
 pub struct WindSpeedSensorParser;
 
 impl SensorParser for WindSpeedSensorParser {
-    fn parse(&self, data: &[u8]) -> Result<SensorData, &'static str> {
+    fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str> {
         let value_bytes = &data[3..5];
         let decimal_bytes = &data[5..7];
         let status_bytes = &data[9..11];
@@ -46,6 +49,7 @@ impl SensorParser for WindSpeedSensorParser {
             value: converted_value,
             unit: "m/s".to_string(),
             status: status_text.to_string(),
+            dev_ip: addr.to_string(),
         })
     }
 }
@@ -54,7 +58,7 @@ impl SensorParser for WindSpeedSensorParser {
 pub struct TemperatureHumiditySensorParser;
 
 impl SensorParser for TemperatureHumiditySensorParser {
-    fn parse(&self, data: &[u8]) -> Result<SensorData, &'static str> {
+    fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str> {
         let humidity_bytes = [data[3], data[4]];
         let temperature_bytes = [data[5], data[6]];
 
@@ -69,6 +73,7 @@ impl SensorParser for TemperatureHumiditySensorParser {
             value: temperature,
             unit: "℃".to_string(),
             status: "正常".to_string(),
+            dev_ip: addr.to_string(),
         })
     }
 }
@@ -77,7 +82,7 @@ impl SensorParser for TemperatureHumiditySensorParser {
 pub struct No2SensorParser;
 
 impl SensorParser for No2SensorParser {
-    fn parse(&self, data: &[u8]) -> Result<SensorData, &'static str> {
+    fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str> {
         // 假设 HeaderByteCount 为 0，DataLength 为 2，你可以根据实际情况修改
         const HEADER_BYTE_COUNT: usize = 0;
         const DATA_LENGTH: usize = 2;
@@ -107,6 +112,7 @@ impl SensorParser for No2SensorParser {
             value: v1,
             unit: "ppm".to_string(),
             status: "正常".to_string(),
+            dev_ip: addr.to_string(),
         })
     }
 }
@@ -123,7 +129,7 @@ pub fn bytes_to_hex(bytes: &[u8]) -> String {
 // 一氧化碳传感器解析器
 pub struct CarbonMonoxideSensorParser;
 impl SensorParser for CarbonMonoxideSensorParser {
-    fn parse(&self, data: &[u8]) -> Result<SensorData, &'static str> {
+    fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str> {
         // 检查数据长度是否符合协议要求，应答帧至少 7 字节（地址码 1 + 功能码 1 + 有效字节数 1 + CO 值 2 + 校验码 2）
         if data.len() < 7 {
             return Err("Invalid data length for carbon monoxide sensor");
@@ -143,6 +149,7 @@ impl SensorParser for CarbonMonoxideSensorParser {
             sensor_type: "CO传感器".to_string(),
             unit: "ppm".to_string(),
             status: "正常".to_string(),
+            dev_ip: addr.to_string(),
         })
     }
 }
@@ -151,7 +158,7 @@ impl SensorParser for CarbonMonoxideSensorParser {
 pub struct OxygenSensorParser;
 
 impl SensorParser for OxygenSensorParser {
-    fn parse(&self, data: &[u8]) -> Result<SensorData, &'static str> {
+    fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str> {
         // 检查数据长度是否符合要求，应答帧至少 7 字节（地址码 1 + 功能码 1 + 有效字节数 1 + 氧气值 2 + 校验码 2）
         if data.len() < 7 {
             return Err("Invalid data length for oxygen sensor");
@@ -171,6 +178,7 @@ impl SensorParser for OxygenSensorParser {
             value: oxygen_value,
             unit: "%".to_string(),
             status: "正常".to_string(),
+            dev_ip: addr.to_string(),
         })
     }
 }
@@ -179,7 +187,7 @@ impl SensorParser for OxygenSensorParser {
 pub struct DustConcentrationSensorParser;
 
 impl SensorParser for DustConcentrationSensorParser {
-    fn parse(&self, data: &[u8]) -> Result<SensorData, &'static str> {
+    fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str> {
         // 检查数据长度是否符合要求，应答帧至少 7 字节（地址码 1 + 功能码 1 + 有效字节数 1 + 粉尘值 2 + 校验码 2）
         if data.len() < 7 {
             return Err("Invalid data length for dust concentration sensor");
@@ -199,6 +207,7 @@ impl SensorParser for DustConcentrationSensorParser {
             value: dust_value,
             unit: "ug/m³".to_string(),
             status: "正常".to_string(),
+            dev_ip: addr.to_string(),
         })
     }
 }

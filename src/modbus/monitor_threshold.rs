@@ -1,3 +1,5 @@
+use chrono::{DateTime, Local};
+
 use crate::modbus::monitor_parser::SensorData;
 // 定义传感器类型枚举
 #[derive(Debug)]
@@ -17,7 +19,23 @@ pub enum SensorType {
     // 一氧化碳
     CarbonMonoxide = 48,
 }
+// 定义预警原因枚举
+#[derive(Debug)]
+pub enum WarningReason {
+    AboveThreshold,
+    BelowThreshold,
+}
 
+// 定义预警信息结构体
+#[derive(Debug)]
+pub struct WarningInfo {
+    pub sensor_type: SensorType,
+    pub dev_ip: String,
+    pub value: f64,
+    pub threshold: f64,
+    pub reason: WarningReason,
+    pub timestamp: DateTime<Local>,
+}
 // 定义温度传感器阈值结构体
 #[derive(Debug)]
 pub struct TemperatureThreshold {
@@ -34,10 +52,39 @@ impl TemperatureThreshold {
     }
 }
 
+// // 温度传感器预警规则检查函数
+// fn check_temperature_warning(data: &SensorData, threshold: &TemperatureThreshold) -> bool {
+//     let temp = data.value;
+//     temp < threshold.min || temp > threshold.max
+// }
+
 // 温度传感器预警规则检查函数
-fn check_temperature_warning(data: &SensorData, threshold: &TemperatureThreshold) -> bool {
+fn check_temperature_warning(
+    data: &SensorData,
+    threshold: &TemperatureThreshold,
+) -> Option<WarningInfo> {
     let temp = data.value;
-    temp < threshold.min || temp > threshold.max
+    if temp < threshold.min {
+        Some(WarningInfo {
+            sensor_type: SensorType::TemperatureHumidity,
+            dev_ip: data.dev_ip.clone(),
+            value: temp,
+            threshold: threshold.min,
+            reason: WarningReason::BelowThreshold,
+            timestamp: Local::now(),
+        })
+    } else if temp > threshold.max {
+        Some(WarningInfo {
+            sensor_type: SensorType::TemperatureHumidity,
+            dev_ip: data.dev_ip.clone(),
+            value: temp,
+            threshold: threshold.max,
+            reason: WarningReason::AboveThreshold,
+            timestamp: Local::now(),
+        })
+    } else {
+        None
+    }
 }
 
 // 定义氧气浓度传感器阈值结构体
@@ -56,9 +103,30 @@ impl OxygenThreshold {
 }
 impl OxygenThreshold {}
 // 氧气浓度传感器预警规则检查函数
-fn check_oxygen_warning(data: &SensorData, threshold: &OxygenThreshold) -> bool {
+// 氧气浓度传感器预警规则检查函数
+fn check_oxygen_warning(data: &SensorData, threshold: &OxygenThreshold) -> Option<WarningInfo> {
     let value = data.value;
-    value < threshold.min || value > threshold.max
+    if value < threshold.min {
+        Some(WarningInfo {
+            sensor_type: SensorType::Oxygen,
+            dev_ip: data.dev_ip.clone(),
+            value: value,
+            threshold: threshold.min,
+            reason: WarningReason::BelowThreshold,
+            timestamp: Local::now(),
+        })
+    } else if value > threshold.max {
+        Some(WarningInfo {
+            sensor_type: SensorType::Oxygen,
+            dev_ip: data.dev_ip.clone(),
+            value: value,
+            threshold: threshold.max,
+            reason: WarningReason::AboveThreshold,
+            timestamp: Local::now(),
+        })
+    } else {
+        None
+    }
 }
 
 // 二氧化氮阈值结构体
@@ -100,7 +168,7 @@ pub fn handle_warning(
     sensor_type: SensorType,
     data: &SensorData,
     threshold: &impl WarningThreshold,
-) -> bool {
+) -> Option<WarningInfo> {
     match sensor_type {
         SensorType::TemperatureHumidity => {
             let temp_threshold = threshold
@@ -116,7 +184,7 @@ pub fn handle_warning(
                 .unwrap();
             check_oxygen_warning(data, oxygen_threshold)
         }
-        _ => false,
+        _ => None,
     }
 }
 
