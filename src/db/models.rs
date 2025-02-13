@@ -28,12 +28,13 @@ pub struct BusMonitorManager {
     pub isdelete: bool,
 }
 
-#[derive(serde::Serialize, Queryable, Selectable)]
+#[derive(serde::Serialize, Queryable, Selectable, Default, Clone)]
 #[diesel(table_name = crate::db::schema::busdevtypemanager)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct BusDevTypeManager {
     pub id: i64,
     pub issensor: bool,
     pub isdelete: bool,
+    pub devtypename: String,
     pub dataconfig: Option<String>,
 }

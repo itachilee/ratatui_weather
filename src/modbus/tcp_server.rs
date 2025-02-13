@@ -1,7 +1,10 @@
-use crate::services::monitor::{
-    bytes_to_hex, SensorData, SensorParser, TemperatureHumiditySensorParser, WindSpeedSensorParser,
-    MONITORS,
+use crate::db::models::BusDevTypeManager;
+use crate::modbus::constant::{DEVTYPES, MONITORS};
+use crate::modbus::monitor_parser::{
+    bytes_to_hex, OxygenSensorParser, SensorData, SensorParser, TemperatureHumiditySensorParser,
+    WindSpeedSensorParser,
 };
+use crate::modbus::monitor_threshold::{handle_warning, OxygenThreshold};
 use dotenv::dotenv;
 use std::collections::HashMap;
 use std::env;
@@ -9,6 +12,8 @@ use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
+
+use super::monitor_threshold::SensorType;
 
 // 设备状态跟踪器
 #[derive(Debug, Clone)]
@@ -32,25 +37,40 @@ impl DeviceStatusTracker {
 
     // 记录设备连接
     fn device_connected(&mut self, addr: SocketAddr) {
+        let dev_type_name = self.get_dev_type_name(&addr);
         if let Some(status) = self.connected_devices.get_mut(&addr) {
             if !*status {
-                println!("Device {} connected", addr);
+                println!("{} Device {} connected", dev_type_name, addr);
                 *status = true;
             }
         } else {
-            println!("Device {} connected", addr);
+            println!("{} Device {} connected", dev_type_name, addr);
             self.connected_devices.insert(addr, true);
         }
     }
 
     // 记录设备断开连接
     fn device_disconnected(&mut self, addr: SocketAddr) {
+        let dev_type_name = self.get_dev_type_name(&addr);
         if let Some(status) = self.connected_devices.get_mut(&addr) {
             if *status {
-                println!("Device {} disconnected", addr);
+                println!("{} Device {} disconnected", dev_type_name, addr);
                 *status = false;
             }
         }
+    }
+    fn get_dev_type_name(&self, addr: &SocketAddr) -> &'static str {
+        let mut dev_type_name = "unknown";
+        if let Some(monitor) = MONITORS
+            .iter()
+            .filter(|x| is_ip_legal(&x.devip))
+            .find(|a| a.devip.trim().parse::<IpAddr>().unwrap() == addr.ip())
+        {
+            if let Some(dev_type) = DEVTYPES.iter().find(|a| a.id == monitor.devtypeid) {
+                dev_type_name = dev_type.devtypename.as_str();
+            }
+        }
+        dev_type_name
     }
 
     // 服务器主动向指定 IP 发送数据
@@ -62,6 +82,28 @@ impl DeviceStatusTracker {
         let mut stream = TcpStream::connect(target_addr).await?;
         stream.write_all(data).await?;
         Ok(())
+    }
+}
+pub fn get_sensor_type_enum(addr: &SocketAddr) -> SensorType {
+    let mut current_dev_type = BusDevTypeManager::default();
+    if let Some(monitor) = MONITORS
+        .iter()
+        .filter(|x| is_ip_legal(&x.devip))
+        .find(|a| a.devip.trim().parse::<IpAddr>().unwrap() == addr.ip())
+    {
+        if let Some(dev_type) = DEVTYPES.iter().find(|a| a.id == monitor.devtypeid) {
+            current_dev_type = dev_type.clone()
+        }
+    }
+
+    match current_dev_type.id {
+        21 => SensorType::TemperatureHumidity,
+        22 => SensorType::Oxygen,
+        23 => SensorType::DustConcentration,
+        24 => SensorType::WindSpeed,
+        18 => SensorType::No2Sensor,
+        48 => SensorType::CarbonMonoxide,
+        _ => SensorType::Unknown,
     }
 }
 
@@ -91,18 +133,26 @@ async fn handle_connection(
         let hex_data = bytes_to_hex(data);
         println!("Received data in hex: {}", hex_data);
 
-        // let wind_speed_parser: WindSpeedSensorParser = WindSpeedSensorParser;
-        // match process_sensor_data(&wind_speed_parser, data) {
-        //     Ok(data) => println!("风速传感器数据: {:?}", data),
-        //     Err(err) => eprintln!("风速传感器解析错误: {}", err),
-        // }
-
-        let t_parser = TemperatureHumiditySensorParser;
-        match process_sensor_data(&t_parser, data) {
-            Ok(data) => println!("温度传感器数据: {:?}", data),
-            Err(err) => eprintln!("温度传感器解析错误: {}", err),
+        let sensor_type = get_sensor_type_enum(&addr);
+        match sensor_type {
+            SensorType::Oxygen => {
+                let t_parser = OxygenSensorParser;
+                match process_sensor_data(&t_parser, data) {
+                    Ok(data) => {
+                        println!("氧气传感器数据: {:?}", data);
+                        let threshold = OxygenThreshold::new();
+                        // 检查温度传感器预警
+                        let temp_warning = handle_warning(SensorType::Oxygen, &data, &threshold);
+                        if temp_warning {
+                            println!("温度传感器触发预警！");
+                        }
+                    }
+                    Err(err) => eprintln!("氧气传感器解析错误: {}", err),
+                }
+            }
+            _ => {}
         }
-        // 示例：向客户端发送响应
+
         stream.write_all(b"Data received").await?;
     }
     Ok(())

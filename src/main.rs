@@ -16,7 +16,7 @@ use models::AppState;
 #[actix_web::main]
 // #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    modbus::run_server().await.unwrap();
+    modbus::tcp_server::run_server().await.unwrap();
     std::result::Result::Ok(())
 
     // // 初始化日志

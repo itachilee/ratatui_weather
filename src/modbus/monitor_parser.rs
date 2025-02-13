@@ -2,60 +2,8 @@ use crate::db::connection::*;
 use crate::db::models::*;
 use crate::db::schema::busdevtypemanager::dsl::*;
 use crate::db::schema::busmonitormanager::dsl::*;
-use crate::models::AppState;
 use diesel::prelude::*;
 use once_cell::sync::Lazy;
-
-// 全局连接池实例
-pub static MONITORS: Lazy<Vec<BusMonitorManager>> = Lazy::new(|| {
-    let m = Monitor {};
-    let monitors = m.query_monitors().unwrap();
-    monitors
-});
-
-pub static DEVTYPES: Lazy<Vec<BusDevTypeManager>> = Lazy::new(|| {
-    let m = Monitor {};
-    let res: Vec<BusDevTypeManager> = m.query_dev_types().unwrap();
-    res
-});
-
-pub struct Monitor;
-
-impl Monitor {
-    fn query_monitors(&self) -> std::io::Result<Vec<BusMonitorManager>> {
-        let conn = &mut POOL
-            .get()
-            .map_err(|e| {
-                eprintln!("Failed to get database connection: {}", e);
-            })
-            .unwrap();
-
-        match busmonitormanager
-            .select(BusMonitorManager::as_select())
-            .load::<BusMonitorManager>(conn)
-        {
-            Ok(response) => Ok(response),
-            Err(e) => Ok(Vec::new()),
-        }
-    }
-
-    fn query_dev_types(&self) -> std::io::Result<Vec<BusDevTypeManager>> {
-        let conn = &mut POOL
-            .get()
-            .map_err(|e| {
-                eprintln!("Failed to get database connection: {}", e);
-            })
-            .unwrap();
-
-        match busdevtypemanager
-            .select(BusDevTypeManager::as_select())
-            .load::<BusDevTypeManager>(conn)
-        {
-            Ok(response) => Ok(response),
-            Err(e) => Ok(Vec::new()),
-        }
-    }
-}
 
 // 定义统一的数据格式
 #[derive(Debug)]
@@ -252,79 +200,5 @@ impl SensorParser for DustConcentrationSensorParser {
             unit: "ug/m³".to_string(),
             status: "正常".to_string(),
         })
-    }
-}
-
-// 定义传感器类型枚举
-#[derive(Debug)]
-pub enum SensorType {
-    TemperatureHumidity,
-    Oxygen,
-    // 可以添加更多传感器类型
-}
-
-// 定义温度传感器阈值结构体
-#[derive(Debug)]
-pub struct TemperatureThreshold {
-    pub min_temp: f64,
-    pub max_temp: f64,
-}
-
-// 定义氧气浓度传感器阈值结构体
-#[derive(Debug)]
-pub struct OxygenThreshold {
-    pub min_oxygen: f64,
-}
-
-// 温度传感器预警规则检查函数
-fn check_temperature_warning(data: &SensorData, threshold: &TemperatureThreshold) -> bool {
-    let temp = data.value;
-    temp < threshold.min_temp || temp > threshold.max_temp
-}
-
-// 氧气浓度传感器预警规则检查函数
-fn check_oxygen_warning(data: &SensorData, threshold: &OxygenThreshold) -> bool {
-    let oxygen = data.value;
-    oxygen < threshold.min_oxygen
-}
-
-// 统一预警处理函数
-pub fn handle_warning(
-    sensor_type: SensorType,
-    data: &SensorData,
-    threshold: &impl WarningThreshold,
-) -> bool {
-    match sensor_type {
-        SensorType::TemperatureHumidity => {
-            let temp_threshold = threshold
-                .as_any()
-                .downcast_ref::<TemperatureThreshold>()
-                .unwrap();
-            check_temperature_warning(data, temp_threshold)
-        }
-        SensorType::Oxygen => {
-            let oxygen_threshold = threshold
-                .as_any()
-                .downcast_ref::<OxygenThreshold>()
-                .unwrap();
-            check_oxygen_warning(data, oxygen_threshold)
-        }
-    }
-}
-
-// 预警阈值 trait
-pub trait WarningThreshold {
-    fn as_any(&self) -> &dyn std::any::Any;
-}
-
-impl WarningThreshold for TemperatureThreshold {
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-}
-
-impl WarningThreshold for OxygenThreshold {
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
