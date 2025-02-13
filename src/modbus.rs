@@ -5,7 +5,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
 use crate::services::monitor::{
-    SensorData, SensorParser, TemperatureHumiditySensorParser, WindSpeedSensorParser,
+    bytes_to_hex, SensorData, SensorParser, TemperatureHumiditySensorParser, WindSpeedSensorParser,
 };
 
 // 设备状态跟踪器
@@ -112,14 +112,6 @@ pub fn process_sensor_data(
     data: &[u8],
 ) -> Result<SensorData, &'static str> {
     parser.parse(data)
-}
-// 将字节数据转换为十六进制字符串
-fn bytes_to_hex(bytes: &[u8]) -> String {
-    let mut hex_string = String::new();
-    for byte in bytes {
-        hex_string.push_str(&format!("{:02x}", byte));
-    }
-    hex_string
 }
 
 pub async fn run_server() -> Result<(), Box<dyn Error>> {

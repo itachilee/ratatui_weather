@@ -6,7 +6,24 @@ diesel::table! {
         published -> Bool,
     }
 }
-
+diesel::table! {
+    busdevtypemanager (id) {
+        id -> Int8,
+        #[max_length = 100]
+        devtypecode -> Varchar,
+        #[max_length = 150]
+        devtypename -> Varchar,
+        issensor -> Bool,
+        #[max_length = 255]
+        dataconfig -> Nullable<Varchar>,
+        isenable -> Bool,
+        createtime -> Nullable<Timestamp>,
+        updatetime -> Nullable<Timestamp>,
+        createuserid -> Nullable<Int8>,
+        updateuserid -> Nullable<Int8>,
+        isdelete -> Bool,
+    }
+}
 diesel::table! {
     busmonitormanager (id) {
         id -> Int8,
