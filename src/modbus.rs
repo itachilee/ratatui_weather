@@ -1,12 +1,14 @@
+use crate::services::monitor::{
+    bytes_to_hex, SensorData, SensorParser, TemperatureHumiditySensorParser, WindSpeedSensorParser,
+    MONITORS,
+};
+use dotenv::dotenv;
 use std::collections::HashMap;
+use std::env;
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
-
-use crate::services::monitor::{
-    bytes_to_hex, SensorData, SensorParser, TemperatureHumiditySensorParser, WindSpeedSensorParser,
-};
 
 // 设备状态跟踪器
 #[derive(Debug, Clone)]
@@ -115,14 +117,28 @@ pub fn process_sensor_data(
 }
 
 pub async fn run_server() -> Result<(), Box<dyn Error>> {
-    let listener = TcpListener::bind("127.0.0.1:8080").await?;
-    println!("Server listening on 127.0.0.1:8080");
+    dotenv().ok();
+    let tcp_host = env::var("TCP_HOST").expect("TCP_HOST must be set");
 
-    // 定义 IP 白名单
-    let whitelist = vec![
-        "127.0.0.1".parse().unwrap(),
-        // 可以添加更多允许的 IP 地址
-    ];
+    let listener = TcpListener::bind(&tcp_host).await?;
+    println!("Server listening on {}", tcp_host);
+
+    let whitelist = MONITORS
+        .iter()
+        .filter(|x| is_ip_legal(&x.devip))
+        .map(|x| x.devip.clone().parse().unwrap())
+        .collect::<Vec<IpAddr>>();
+    let mut count = 1;
+
+    for ip in whitelist.iter() {
+        println!("{}: {}", count, ip);
+        count += 1;
+    }
+    // // 定义 IP 白名单
+    // let whitelist = vec![
+    //     // "127.0.0.1".parse().unwrap(),
+    //      // 可以添加更多允许的 IP 地址
+    // ];
     let tracker = DeviceStatusTracker::new(whitelist);
 
     loop {
@@ -138,5 +154,12 @@ pub async fn run_server() -> Result<(), Box<dyn Error>> {
         } else {
             println!("Connection from {} rejected: IP not in whitelist", addr);
         }
+    }
+}
+/// 判断ip是否合法
+pub fn is_ip_legal(ip: &str) -> bool {
+    match ip.parse::<IpAddr>() {
+        Ok(_) => true,
+        Err(_) => false,
     }
 }
