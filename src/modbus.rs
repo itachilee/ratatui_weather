@@ -4,6 +4,10 @@ use std::net::{IpAddr, SocketAddr};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
+use crate::services::monitor::{
+    SensorData, SensorParser, TemperatureHumiditySensorParser, WindSpeedSensorParser,
+};
+
 // 设备状态跟踪器
 #[derive(Debug, Clone)]
 struct DeviceStatusTracker {
@@ -75,17 +79,47 @@ async fn handle_connection(
             break;
         }
         let data = &buffer[0..n];
-        // 这里可以对传感器数据进行处理，比如解析、存储等
-        println!(
-            "Received sensor data from {}: {:?}",
-            addr,
-            String::from_utf8_lossy(data)
-        );
+        // // 这里可以对传感器数据进行处理，比如解析、存储等
+        // println!(
+        //     "Received sensor data from {}: {:?}",
+        //     addr,
+        //     String::from_utf8_lossy(data)
+        // );
 
+        let hex_data = bytes_to_hex(data);
+        println!("Received data in hex: {}", hex_data);
+
+        // let wind_speed_parser: WindSpeedSensorParser = WindSpeedSensorParser;
+        // match process_sensor_data(&wind_speed_parser, data) {
+        //     Ok(data) => println!("风速传感器数据: {:?}", data),
+        //     Err(err) => eprintln!("风速传感器解析错误: {}", err),
+        // }
+
+        let t_parser = TemperatureHumiditySensorParser;
+        match process_sensor_data(&t_parser, data) {
+            Ok(data) => println!("温度传感器数据: {:?}", data),
+            Err(err) => eprintln!("温度传感器解析错误: {}", err),
+        }
         // 示例：向客户端发送响应
         stream.write_all(b"Data received").await?;
     }
     Ok(())
+}
+
+// 统一处理传感器数据
+pub fn process_sensor_data(
+    parser: &dyn SensorParser,
+    data: &[u8],
+) -> Result<SensorData, &'static str> {
+    parser.parse(data)
+}
+// 将字节数据转换为十六进制字符串
+fn bytes_to_hex(bytes: &[u8]) -> String {
+    let mut hex_string = String::new();
+    for byte in bytes {
+        hex_string.push_str(&format!("{:02x}", byte));
+    }
+    hex_string
 }
 
 pub async fn run_server() -> Result<(), Box<dyn Error>> {
@@ -94,10 +128,10 @@ pub async fn run_server() -> Result<(), Box<dyn Error>> {
 
     // 定义 IP 白名单
     let whitelist = vec![
-        // "127.0.0.1".parse().unwrap(),
+        "127.0.0.1".parse().unwrap(),
         // 可以添加更多允许的 IP 地址
     ];
-    let mut tracker = DeviceStatusTracker::new(whitelist);
+    let tracker = DeviceStatusTracker::new(whitelist);
 
     loop {
         let (stream, addr) = listener.accept().await?;
