@@ -1,4 +1,6 @@
 use crate::config;
+use actix_web::HttpResponse;
+use chrono::Local;
 use elasticsearch::{http::transport::Transport, Elasticsearch};
 use futures::lock::Mutex;
 use serde::{Deserialize, Serialize};
@@ -67,4 +69,15 @@ impl<T> ApiResponse<T> {
             error: Some(message.into()),
         }
     }
+}
+
+#[derive(Serialize)]
+pub struct PaginatedResult<T> {
+    pub page: i64,
+    pub page_size: i64,
+    pub total: i64,
+    pub total_pages: i64,
+    pub items: Vec<T>,
+    pub has_prev_page: bool,
+    pub has_next_page: bool,
 }

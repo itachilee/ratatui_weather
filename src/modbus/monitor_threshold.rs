@@ -6,7 +6,7 @@ use crate::modbus::monitor_parser::SensorData;
 pub enum SensorType {
     Unknown,
 
-    // 温湿度
+    // 温湿度,接入两个传感器
     TemperatureHumidity = 21,
     // 氧气
     Oxygen = 22,
@@ -63,6 +63,48 @@ fn check_temperature_warning(
     data: &SensorData,
     threshold: &TemperatureThreshold,
 ) -> Option<WarningInfo> {
+    let temp = data.value;
+    if temp < threshold.min {
+        Some(WarningInfo {
+            sensor_type: SensorType::TemperatureHumidity,
+            dev_ip: data.dev_ip.clone(),
+            value: temp,
+            threshold: threshold.min,
+            reason: WarningReason::BelowThreshold,
+            timestamp: Local::now(),
+        })
+    } else if temp > threshold.max {
+        Some(WarningInfo {
+            sensor_type: SensorType::TemperatureHumidity,
+            dev_ip: data.dev_ip.clone(),
+            value: temp,
+            threshold: threshold.max,
+            reason: WarningReason::AboveThreshold,
+            timestamp: Local::now(),
+        })
+    } else {
+        None
+    }
+}
+
+// 定义温度传感器阈值结构体
+#[derive(Debug)]
+pub struct HumidityThreshold {
+    pub min: f64,
+    pub max: f64,
+}
+
+impl HumidityThreshold {
+    fn new() -> Self {
+        Self {
+            min: 10.0,
+            max: 34.0,
+        }
+    }
+}
+
+// 温度传感器预警规则检查函数
+fn check_humidty_warning(data: &SensorData, threshold: &HumidityThreshold) -> Option<WarningInfo> {
     let temp = data.value;
     if temp < threshold.min {
         Some(WarningInfo {

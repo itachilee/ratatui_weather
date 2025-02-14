@@ -18,13 +18,14 @@ pub struct NewPost<'a> {
     pub body: &'a str,
 }
 
-#[derive(serde::Serialize, Queryable, Selectable)]
+#[derive(serde::Serialize, Queryable, Selectable, Clone)]
 #[diesel(table_name = crate::db::schema::busmonitormanager)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct BusMonitorManager {
     pub id: i64,
     pub devtypeid: i64,
     pub devip: String,
+    pub devicename: String,
     pub isdelete: bool,
 }
 

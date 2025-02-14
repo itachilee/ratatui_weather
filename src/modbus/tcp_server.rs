@@ -1,8 +1,8 @@
 use crate::db::models::BusDevTypeManager;
 use crate::modbus::constant::{DEVTYPES, MONITORS};
 use crate::modbus::monitor_parser::{
-    bytes_to_hex, OxygenSensorParser, SensorData, SensorParser, TemperatureHumiditySensorParser,
-    WindSpeedSensorParser,
+    bytes_to_hex, HumiditySensorParser, OxygenSensorParser, SensorData, SensorParser,
+    TemperatureSensorParser, WindSpeedSensorParser,
 };
 use crate::modbus::monitor_threshold::{handle_warning, OxygenThreshold};
 use dotenv::dotenv;
@@ -176,7 +176,9 @@ pub async fn run_server() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
     let tcp_host = env::var("TCP_HOST").expect("TCP_HOST must be set");
 
-    let listener = TcpListener::bind(&tcp_host).await?;
+    let listener = TcpListener::bind(&tcp_host)
+        .await
+        .expect("服务器端口监听失败");
     println!("Server listening on {}", tcp_host);
 
     let whitelist = MONITORS
@@ -184,12 +186,12 @@ pub async fn run_server() -> Result<(), Box<dyn Error>> {
         .filter(|x| is_ip_legal(&x.devip))
         .map(|x| x.devip.clone().parse().unwrap())
         .collect::<Vec<IpAddr>>();
-    let mut count = 1;
+    // let mut count = 1;
 
-    for ip in whitelist.iter() {
-        println!("{}: {}", count, ip);
-        count += 1;
-    }
+    // for ip in whitelist.iter() {
+    //     println!("{}: {}", count, ip);
+    //     count += 1;
+    // }
     // // 定义 IP 白名单
     // let whitelist = vec![
     //     // "127.0.0.1".parse().unwrap(),

@@ -54,24 +54,47 @@ impl SensorParser for WindSpeedSensorParser {
     }
 }
 
-// 温湿度传感器解析器
-pub struct TemperatureHumiditySensorParser;
-
-impl SensorParser for TemperatureHumiditySensorParser {
+pub struct TemperatureSensorParser;
+impl SensorParser for TemperatureSensorParser {
     fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str> {
-        let humidity_bytes = [data[3], data[4]];
-        let temperature_bytes = [data[5], data[6]];
+        // let humidity_bytes = [data[3], data[4]];
 
-        let humidity_raw = u16::from_be_bytes(humidity_bytes);
-        let humidity = humidity_raw as f64 * 0.1;
+        // let humidity_raw = u16::from_be_bytes(humidity_bytes);
+        // let humidity = humidity_raw as f64 * 0.1;
+
+        let temperature_bytes = [data[5], data[6]];
         let temperature_raw = i16::from_be_bytes(temperature_bytes);
         let temperature = temperature_raw as f64 * 0.1;
 
         // 这里为了简化，只返回温度数据，可根据需求扩展返回湿度数据
         Ok(SensorData {
-            sensor_type: "温湿度传感器".to_string(),
+            sensor_type: "温度传感器|温度传感器".to_string(),
             value: temperature,
             unit: "℃".to_string(),
+            status: "正常".to_string(),
+            dev_ip: addr.to_string(),
+        })
+    }
+}
+// 温湿度传感器解析器
+pub struct HumiditySensorParser;
+
+impl SensorParser for HumiditySensorParser {
+    fn parse(&self, addr: &IpAddr, data: &[u8]) -> Result<SensorData, &'static str> {
+        let humidity_bytes = [data[3], data[4]];
+
+        let humidity_raw = u16::from_be_bytes(humidity_bytes);
+        let humidity = humidity_raw as f64 * 0.1;
+
+        // let temperature_bytes = [data[5], data[6]];
+        // let temperature_raw = i16::from_be_bytes(temperature_bytes);
+        // let temperature = temperature_raw as f64 * 0.1;
+
+        // 这里为了简化，只返回温度数据，可根据需求扩展返回湿度数据
+        Ok(SensorData {
+            sensor_type: "温度传感器|湿度传感器".to_string(),
+            value: humidity,
+            unit: "％".to_string(),
             status: "正常".to_string(),
             dev_ip: addr.to_string(),
         })
