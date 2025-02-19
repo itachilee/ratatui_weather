@@ -38,7 +38,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             // .wrap(RequestLogger::new("./logs/requests.log".to_string()))
             .app_data(app_state.clone())
-            .configure(routes::wechat::config)
+            // .configure(routes::wechat::config)
+            .configure(routes::aoyinuo::config)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

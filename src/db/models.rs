@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use diesel::prelude::*;
 
 #[derive(serde::Serialize, Queryable, Selectable)]
@@ -18,7 +20,7 @@ pub struct NewPost<'a> {
     pub body: &'a str,
 }
 
-#[derive(serde::Serialize, Queryable, Selectable, Clone)]
+#[derive(serde::Serialize, Queryable, Selectable, Clone, PartialEq, Eq)]
 #[diesel(table_name = crate::db::schema::busmonitormanager)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct BusMonitorManager {
@@ -27,6 +29,12 @@ pub struct BusMonitorManager {
     pub devip: String,
     pub devicename: String,
     pub isdelete: bool,
+}
+
+impl Hash for BusMonitorManager {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
 }
 
 #[derive(serde::Serialize, Queryable, Selectable, Default, Clone)]

@@ -1,3 +1,4 @@
+pub mod aoyinuo;
 pub mod chat;
 pub mod elasticsearch;
 pub mod health;
