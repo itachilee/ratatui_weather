@@ -1,4 +1,5 @@
 mod config;
+mod constants;
 mod db;
 mod handlers;
 mod middleware;
@@ -6,7 +7,6 @@ mod modbus;
 mod models;
 mod routes;
 mod services;
-
 use actix_web::{middleware::Logger, web, App, HttpServer};
 
 use anyhow::Ok;

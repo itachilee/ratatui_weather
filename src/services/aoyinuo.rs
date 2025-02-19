@@ -1,11 +1,11 @@
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 
+use crate::constants::constant::MONITORS;
 use crate::db::connection::*;
 use crate::db::models::*;
 use crate::db::schema::busdevtypemanager::dsl::*;
 use crate::db::schema::busmonitormanager::dsl::*;
-use crate::modbus::constant::MONITORS;
 use crate::models::PaginatedResult;
 use diesel::prelude::*;
 
@@ -13,7 +13,7 @@ pub struct Aoyinuo;
 
 impl Aoyinuo {
     fn query_monitors(&self) -> std::io::Result<Vec<BusMonitorManager>> {
-        let conn = &mut POOL
+        let conn: &mut diesel::r2d2::PooledConnection<ConnectionManager<PgConnection>> = &mut POOL
             .get()
             .map_err(|e| {
                 eprintln!("Failed to get database connection: {}", e);

@@ -1,5 +1,5 @@
+use crate::constants::constant::{DEVTYPES, MONITORS};
 use crate::db::models::BusDevTypeManager;
-use crate::modbus::constant::{DEVTYPES, MONITORS};
 use crate::modbus::monitor_parser::{
     bytes_to_hex, HumiditySensorParser, OxygenSensorParser, SensorData, SensorParser,
     TemperatureSensorParser, WindSpeedSensorParser,
