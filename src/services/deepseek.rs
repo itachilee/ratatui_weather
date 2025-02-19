@@ -1,4 +1,4 @@
-use crate::models::{ChatRequest, DeepSeekRequest, DeepSeekResponse, Message};
+use crate::models::{DeepSeekRequest, DeepSeekResponse, Message};
 use anyhow::Result;
 
 pub struct DeepSeekService {

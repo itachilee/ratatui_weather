@@ -1,4 +1,4 @@
-use crate::handlers::{chat, elasticsearch, health};
+use crate::handlers::elasticsearch;
 use actix_web::web;
 
 pub fn config(cfg: &mut web::ServiceConfig) {

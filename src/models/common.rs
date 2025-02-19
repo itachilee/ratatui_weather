@@ -1,9 +1,7 @@
 use crate::config;
-use actix_web::HttpResponse;
-use chrono::Local;
 use elasticsearch::{http::transport::Transport, Elasticsearch};
 use futures::lock::Mutex;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::sync::Arc;
 
 #[derive(Debug)]

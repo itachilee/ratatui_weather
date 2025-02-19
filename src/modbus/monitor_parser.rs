@@ -1,11 +1,5 @@
 use std::net::IpAddr;
 
-use crate::db::connection::*;
-use crate::db::models::*;
-use crate::db::schema::busdevtypemanager::dsl::*;
-use crate::db::schema::busmonitormanager::dsl::*;
-use diesel::prelude::*;
-use once_cell::sync::Lazy;
 
 // 定义统一的数据格式
 #[derive(Debug)]

@@ -1,7 +1,6 @@
 use diesel::pg::PgConnection;
-use diesel::r2d2::{ConnectionManager, Pool};
+use diesel::r2d2::ConnectionManager;
 
-use crate::constants::constant::MONITORS;
 use crate::db::connection::*;
 use crate::db::models::*;
 use crate::db::schema::busdevtypemanager::dsl::*;

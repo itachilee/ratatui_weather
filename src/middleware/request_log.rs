@@ -4,7 +4,7 @@ use actix_web::{
 };
 use chrono::Local;
 use futures::future::LocalBoxFuture;
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::Write;
 use std::{
     future::{ready, Ready},

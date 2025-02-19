@@ -9,8 +9,6 @@ mod routes;
 mod services;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 
-use anyhow::Ok;
-use middleware::request_log::RequestLogger;
 use models::AppState;
 
 #[actix_web::main]

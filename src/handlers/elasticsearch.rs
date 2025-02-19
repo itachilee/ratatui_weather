@@ -1,7 +1,7 @@
 use crate::models::{AppState, Document};
 use actix_web::{get, post, Responder};
-use actix_web::{web, App, HttpServer};
-use elasticsearch::{http::transport::Transport, Elasticsearch, IndexParts, SearchParts};
+use actix_web::web;
+use elasticsearch::{IndexParts, SearchParts};
 use log::info;
 use serde_json::{json, Value};
 

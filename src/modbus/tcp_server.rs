@@ -1,8 +1,7 @@
 use crate::constants::constant::{DEVTYPES, MONITORS};
 use crate::db::models::BusDevTypeManager;
 use crate::modbus::monitor_parser::{
-    bytes_to_hex, HumiditySensorParser, OxygenSensorParser, SensorData, SensorParser,
-    TemperatureSensorParser, WindSpeedSensorParser,
+    OxygenSensorParser, SensorData, SensorParser,
 };
 use crate::modbus::monitor_threshold::{handle_warning, OxygenThreshold};
 use dotenv::dotenv;

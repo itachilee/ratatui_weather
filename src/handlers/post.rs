@@ -1,7 +1,7 @@
 use crate::db::models::*;
 use crate::db::schema::posts::dsl::*;
 use crate::models::common::*;
-use actix_web::{get, post, put, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
