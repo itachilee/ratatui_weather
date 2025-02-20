@@ -1,7 +1,14 @@
 use std::hash::Hash;
 
+use chrono::{DateTime, NaiveDateTime, Utc};
+use diesel::backend::Backend;
+use diesel::deserialize::{self, FromSql};
+use diesel::pg::Pg;
 use diesel::prelude::*;
-
+use diesel::serialize::{self, IsNull, Output, ToSql};
+use diesel::sql_types::Timestamp;
+use serde::{Deserialize, Serialize};
+use std::io::Write;
 #[derive(serde::Serialize, Queryable, Selectable)]
 #[diesel(table_name = crate::db::schema::posts)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -46,4 +53,20 @@ pub struct BusDevTypeManager {
     pub isdelete: bool,
     pub devtypename: String,
     pub dataconfig: Option<String>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Queryable, Selectable)]
+#[diesel(table_name =crate::db::schema::system_security_info)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct SystemSecurityInfo {
+    pub id: i32,
+    pub start_date: NaiveDateTime,
+    pub end_date: Option<NaiveDateTime>,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::db::schema::system_security_info)]
+pub struct NewSystemSecurityInfo {
+    pub start_date: NaiveDateTime,
+    pub end_date: Option<NaiveDateTime>,
 }

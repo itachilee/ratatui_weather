@@ -2,7 +2,11 @@ use crate::db::connection::*;
 use crate::db::models::*;
 use crate::db::schema::busdevtypemanager::dsl::*;
 use crate::db::schema::busmonitormanager::dsl::*;
+use crate::db::schema::system_security_info::dsl::*;
 use crate::models::PaginatedResult;
+use chrono::DateTime;
+use chrono::NaiveDateTime;
+use chrono::Utc;
 use diesel::prelude::*;
 use once_cell::sync::Lazy;
 
@@ -22,6 +26,44 @@ pub static DEVTYPES: Lazy<Vec<BusDevTypeManager>> = Lazy::new(|| {
 pub struct Monitor;
 
 impl Monitor {
+    pub fn insert_security_info(&self) {
+        let conn: &mut diesel::r2d2::PooledConnection<
+            diesel::r2d2::ConnectionManager<PgConnection>,
+        > = &mut POOL
+            .get()
+            .map_err(|e| {
+                eprintln!("Failed to get database connection: {}", e);
+            })
+            .unwrap();
+
+        // 获取当前带有时区信息的时间
+        let now: DateTime<Utc> = Utc::now();
+        // 将其转换为 NaiveDateTime
+        let t = now.naive_utc();
+        let new_info = NewSystemSecurityInfo {
+            start_date: t,
+            end_date: None,
+        };
+
+        diesel::insert_into(system_security_info)
+            .values(&new_info)
+            .execute(conn)
+            .expect("Error inserting system security info");
+    }
+    pub fn query_security_info(&self) -> SystemSecurityInfo {
+        let conn: &mut diesel::r2d2::PooledConnection<
+            diesel::r2d2::ConnectionManager<PgConnection>,
+        > = &mut POOL
+            .get()
+            .map_err(|e| {
+                eprintln!("Failed to get database connection: {}", e);
+            })
+            .unwrap();
+        let i = system_security_info
+            .first::<SystemSecurityInfo>(conn)
+            .unwrap();
+        i
+    }
     fn query_monitors(&self) -> std::io::Result<Vec<BusMonitorManager>> {
         let conn: &mut diesel::r2d2::PooledConnection<
             diesel::r2d2::ConnectionManager<PgConnection>,
@@ -84,6 +126,14 @@ impl Monitor {
         page_size: i64,
     ) -> PaginatedResult<BusMonitorManager> {
         paginate(&self.query_ipphones(), page, page_size)
+    }
+
+    pub fn query_cameras_by_pages(
+        &self,
+        page: i64,
+        page_size: i64,
+    ) -> PaginatedResult<BusMonitorManager> {
+        paginate(&self.query_cameras(), page, page_size)
     }
 }
 

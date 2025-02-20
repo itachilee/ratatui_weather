@@ -1627,6 +1627,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    system_security_info (id) {
+        id -> Int4,
+        start_date -> Timestamp,
+        end_date -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     systenant (id) {
         id -> Int8,
         userid -> Int8,
@@ -1913,6 +1921,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     sysrole,
     sysrolemenu,
     sysroleorg,
+    system_security_info,
     systenant,
     sysuser,
     sysuserextorg,

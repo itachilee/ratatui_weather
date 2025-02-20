@@ -10,6 +10,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .service(post::create_post)
             .service(post::update_post)
             .service(post::delete_post)
-            .service(aoyinuo::ipphones),
+            .service(aoyinuo::ipphones)
+            .service(aoyinuo::create_security_info)
+            .service(aoyinuo::query_security_info),
     );
 }

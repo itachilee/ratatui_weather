@@ -75,3 +75,12 @@ diesel::table! {
         isdelete -> Bool,
     }
 }
+
+// src/schema.rs
+diesel::table! {
+    system_security_info (id) {
+        id -> Int4,
+        start_date -> Timestamp,
+        end_date -> Nullable<Timestamp>,
+    }
+}
