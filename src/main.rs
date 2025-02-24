@@ -9,11 +9,14 @@ mod routes;
 mod services;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 
+use constants::constant::Monitor;
 use models::AppState;
 
 #[actix_web::main]
 // #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    let monitor = Monitor;
+    monitor.insert_security_info();
     tokio::spawn(async move {
         match modbus::tcp_server::run_server().await {
             std::result::Result::Ok(_) => {}

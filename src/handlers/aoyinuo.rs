@@ -2,6 +2,7 @@ use crate::constants::constant::Monitor;
 use crate::models::{ApiResponse, AppState, ChatRequest, ChatResponse, Message};
 use crate::services::deepseek::DeepSeekService;
 use actix_web::{get, post, web, HttpResponse};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BasePageRequest {
@@ -33,7 +34,7 @@ pub async fn cameras(req: web::Json<BasePageRequest>) -> HttpResponse {
 pub struct BasicInfoResp {
     pub altitude: f64,
     pub well_deep: f64,
-    pub safe_production_days: i32,
+    pub safe_production_days: i64,
     pub water_supply_rescue: i32,
     pub pressure_wind: i32,
     pub emergency_evacuation: String,
@@ -41,10 +42,15 @@ pub struct BasicInfoResp {
 /// 综合情况
 #[get("/basic_info")]
 pub async fn basic_info() -> HttpResponse {
-    let info = BasicInfoResp {
+    let monitor = Monitor;
+    let res = monitor.query_security_info();
+    let now = Utc::now().naive_utc();
+    let duration = now - res.start_date;
+    let days = duration.num_days().abs();
+    let info: BasicInfoResp = BasicInfoResp {
         altitude: 4050.,
         well_deep: 800.,
-        safe_production_days: 2050,
+        safe_production_days: days,
         water_supply_rescue: 45,
         pressure_wind: 32,
         emergency_evacuation: "已备齐物资".to_string(),
@@ -53,12 +59,12 @@ pub async fn basic_info() -> HttpResponse {
     HttpResponse::Ok().json(ApiResponse::success(info))
 }
 
-#[get("/create_security_info")]
-pub async fn create_security_info() -> HttpResponse {
-    let monitor = Monitor;
-    let res = monitor.insert_security_info();
-    HttpResponse::Ok().json(ApiResponse::success("success"))
-}
+// #[get("/create_security_info")]
+// pub async fn create_security_info() -> HttpResponse {
+//     let monitor = Monitor;
+//     let res = monitor.insert_security_info();
+//     HttpResponse::Ok().json(ApiResponse::success("success"))
+// }
 
 #[get("/query_security_info")]
 pub async fn query_security_info() -> HttpResponse {

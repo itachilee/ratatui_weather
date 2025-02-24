@@ -8,6 +8,7 @@ use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Utc;
 use diesel::prelude::*;
+use diesel::result::Error::NotFound;
 use once_cell::sync::Lazy;
 
 // 全局连接池实例
@@ -45,10 +46,25 @@ impl Monitor {
             end_date: None,
         };
 
-        diesel::insert_into(system_security_info)
-            .values(&new_info)
-            .execute(conn)
-            .expect("Error inserting system security info");
+        match system_security_info.first::<SystemSecurityInfo>(conn) {
+            Ok(res) => {}
+            Err(NotFound) => {
+                match diesel::insert_into(system_security_info)
+                    .values(&new_info)
+                    .execute(conn)
+                {
+                    Ok(res) => {
+                        println!("insert system security info success");
+                    }
+                    Err(e) => {
+                        println!("Error insert system security info {}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("Error query system security info {}", e);
+            }
+        }
     }
     pub fn query_security_info(&self) -> SystemSecurityInfo {
         let conn: &mut diesel::r2d2::PooledConnection<
