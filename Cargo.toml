@@ -32,5 +32,6 @@ rand = "0.9.0"
 # openssl = { version = "0.10", features = ["vendored"] }
 xml-rs = "0.8.25"
 diesel = { version = "2.2.0", features = ["postgres", "r2d2","chrono"] }
+actix-cors = "0.7.0"
 # surrealdb = "2.1.4"
 # wechat = { path = "vendor/wechat-rs" }

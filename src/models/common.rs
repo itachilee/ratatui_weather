@@ -1,4 +1,5 @@
 use crate::config;
+use chrono::{NaiveDateTime, Utc};
 use elasticsearch::{http::transport::Transport, Elasticsearch};
 use futures::lock::Mutex;
 use serde::Serialize;
@@ -46,25 +47,38 @@ pub fn establish_esconnection() -> Elasticsearch {
 
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
+    pub code: i32,
+    pub extras: Option<String>,
+    pub message: String,
     pub success: bool,
-    pub data: Option<T>,
-    pub error: Option<String>,
+    pub result: Option<T>,
+    pub time: NaiveDateTime,
+    #[serde(rename = "type")]
+    type_: String,
 }
 
 impl<T> ApiResponse<T> {
     pub fn success(data: T) -> Self {
         Self {
+            code: 200,
+            extras: None,
             success: true,
-            data: Some(data),
-            error: None,
+            result: Some(data),
+            time: Utc::now().naive_local(),
+            message: "".to_string(),
+            type_: "success".into(),
         }
     }
 
     pub fn error(message: impl Into<String>) -> Self {
         Self {
+            code: 200,
+            extras: None,
             success: false,
-            data: None,
-            error: Some(message.into()),
+            result: None,
+            time: Utc::now().naive_local(),
+            message: message.into(),
+            type_: "error".into(),
         }
     }
 }

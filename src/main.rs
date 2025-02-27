@@ -8,8 +8,8 @@ mod modbus;
 mod models;
 mod routes;
 mod services;
+use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
-
 use constants::constant::Monitor;
 use models::AppState;
 
@@ -38,14 +38,16 @@ async fn main() -> std::io::Result<()> {
     println!("Server running at http://localhost:8081");
 
     HttpServer::new(move || {
+        let cors = Cors::permissive();
         App::new()
             .wrap(Logger::default())
+            .wrap(cors)
             // .wrap(RequestLogger::new("./logs/requests.log".to_string()))
             .app_data(app_state.clone())
             // .configure(routes::wechat::config)
             .configure(routes::config)
     })
-    .bind(("127.0.0.1", 8081))?
+    .bind(("0.0.0.0", 8081))?
     .run()
     .await
 }

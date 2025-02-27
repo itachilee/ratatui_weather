@@ -70,8 +70,8 @@ impl std::fmt::Display for WarningInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}|{}| {}传感器设备数据【{}】{}【{}】触发预警！请及时进行检查。",
-            self.timestamp,
+            "{}| {}传感器设备数据【{}】{}【{}】触发预警！请及时进行处理!",
+            // self.timestamp,
             self.dev_ip,
             self.sensor_type.to_string(),
             self.value,

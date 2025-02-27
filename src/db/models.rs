@@ -36,6 +36,7 @@ pub struct BusMonitorManager {
     pub devip: String,
     pub devicename: String,
     pub isdelete: bool,
+    pub onlinestate: bool,
 }
 
 impl Hash for BusMonitorManager {
@@ -88,11 +89,18 @@ pub struct WarningInsert<'a> {
 #[diesel(table_name =crate::db::schema::warnings)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct WarningQuery {
-    sensor_type: String,
-    dev_ip: String,
-    value: f64,
-    threshold: f64,
-    reason: i32,
-    description: String,
-    timestamp: chrono::NaiveDateTime, // 或者使用 chrono::DateTime<Utc>
+    pub id: i32,
+    pub sensor_type: String,
+    pub dev_ip: String,
+    pub value: f64,
+    pub threshold: f64,
+    pub reason: i32,
+    pub description: String,
+    pub timestamp: chrono::NaiveDateTime, // 或者使用 chrono::DateTime<Utc>
+}
+
+#[derive(Queryable)]
+struct DeviceOnlineCount {
+    devtypeid: i64,
+    count: i64,
 }

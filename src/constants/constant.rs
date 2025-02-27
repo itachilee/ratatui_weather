@@ -1,14 +1,19 @@
+use std::collections::HashMap;
+
 use crate::db::connection::*;
 use crate::db::models::*;
-use crate::db::schema::busdevtypemanager::dsl::*;
-use crate::db::schema::busmonitormanager::dsl::*;
-use crate::db::schema::system_security_info::dsl::*;
+use crate::db::schema::busdevtypemanager::dsl::busdevtypemanager;
+use crate::db::schema::busmonitormanager::devtypeid;
+use crate::db::schema::busmonitormanager::dsl::busmonitormanager;
+use crate::db::schema::busmonitormanager::onlinestate;
+use crate::db::schema::system_security_info::dsl::system_security_info;
 use crate::db::schema::warnings::dsl::*;
 use crate::modbus::monitor_threshold::WarningInfo;
+use crate::models::DeviceStats;
 use crate::models::PaginatedResult;
 use chrono::DateTime;
-use chrono::NaiveDateTime;
 use chrono::Utc;
+use diesel::dsl::count;
 use diesel::prelude::*;
 use diesel::result::Error::NotFound;
 use log::info;
@@ -110,6 +115,7 @@ impl Monitor {
             }
         }
     }
+
     pub fn query_security_info(&self) -> SystemSecurityInfo {
         let conn: &mut diesel::r2d2::PooledConnection<
             diesel::r2d2::ConnectionManager<PgConnection>,
@@ -121,6 +127,22 @@ impl Monitor {
             .unwrap();
         let i = system_security_info
             .first::<SystemSecurityInfo>(conn)
+            .unwrap();
+        i
+    }
+
+    pub fn query_warning(&self) -> WarningQuery {
+        let conn: &mut diesel::r2d2::PooledConnection<
+            diesel::r2d2::ConnectionManager<PgConnection>,
+        > = &mut POOL
+            .get()
+            .map_err(|e| {
+                eprintln!("Failed to get database connection: {}", e);
+            })
+            .unwrap();
+        let i = warnings
+            .order_by(timestamp.desc())
+            .first::<WarningQuery>(conn)
             .unwrap();
         i
     }
@@ -194,6 +216,30 @@ impl Monitor {
         page_size: i64,
     ) -> PaginatedResult<BusMonitorManager> {
         paginate(&self.query_cameras(), page, page_size)
+    }
+
+    pub fn count_online_devices(&self) -> Vec<DeviceStats> {
+        let mut groups: HashMap<i64, (usize, usize)> = HashMap::new();
+
+        for device in MONITORS.clone() {
+            let dev_type = device.devtypeid;
+            if device.onlinestate {
+                groups.entry(dev_type).or_insert((0, 0)).0 += 1;
+            } else {
+                groups.entry(dev_type).or_insert((0, 0)).1 += 1;
+            }
+        }
+
+        // 将 HashMap 转换为 Vec
+        let res: Vec<DeviceStats> = groups
+            .into_iter()
+            .map(|(dev_type, (online, offline))| DeviceStats {
+                devtypeid: dev_type,
+                online_count: online,
+                offline_count: offline,
+            })
+            .collect();
+        res
     }
 }
 

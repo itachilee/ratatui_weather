@@ -72,3 +72,19 @@ pub async fn query_security_info() -> HttpResponse {
     let res = monitor.query_security_info();
     HttpResponse::Ok().json(ApiResponse::success(res))
 }
+
+/// 获取最新一条预警信息
+#[get("/query_warning")]
+pub async fn query_warning() -> HttpResponse {
+    let monitor = Monitor;
+    let res = monitor.query_warning();
+    HttpResponse::Ok().json(ApiResponse::success(res))
+}
+
+/// 设备在线统计
+#[get("/count_online_devices")]
+pub async fn count_online_devices() -> HttpResponse {
+    let monitor = Monitor;
+    let res = monitor.count_online_devices();
+    HttpResponse::Ok().json(ApiResponse::success(res))
+}
