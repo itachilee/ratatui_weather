@@ -1,14 +1,7 @@
 use std::hash::Hash;
 
-use chrono::{DateTime, NaiveDateTime, Utc};
-use diesel::backend::Backend;
-use diesel::deserialize::{self, FromSql};
-use diesel::pg::Pg;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use diesel::serialize::{self, IsNull, Output, ToSql};
-use diesel::sql_types::Timestamp;
-use serde::{Deserialize, Serialize};
-use std::io::Write;
 #[derive(serde::Serialize, Queryable, Selectable)]
 #[diesel(table_name = crate::db::schema::posts)]
 #[diesel(check_for_backend(diesel::pg::Pg))]

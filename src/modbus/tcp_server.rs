@@ -1,12 +1,8 @@
 use super::monitor_threshold::SensorType;
 use crate::constants::constant::{Monitor, DEVTYPES, MONITORS};
-use crate::db::connection::POOL;
 use crate::db::models::BusDevTypeManager;
-use crate::db::models::{WarningInsert, WarningQuery};
 use crate::modbus::monitor_parser::{OxygenSensorParser, SensorData, SensorParser};
 use crate::modbus::monitor_threshold::{handle_warning, OxygenThreshold};
-use chrono::Utc;
-use diesel::PgConnection;
 use dotenv::dotenv;
 use std::collections::HashMap;
 use std::env;

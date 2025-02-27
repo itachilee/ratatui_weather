@@ -1,6 +1,5 @@
 use crate::constants::constant::Monitor;
-use crate::models::{ApiResponse, AppState, ChatRequest, ChatResponse, Message};
-use crate::services::deepseek::DeepSeekService;
+use crate::models::ApiResponse;
 use actix_web::{get, post, web, HttpResponse};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
