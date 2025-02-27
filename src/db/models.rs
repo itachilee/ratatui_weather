@@ -70,3 +70,29 @@ pub struct NewSystemSecurityInfo {
     pub start_date: NaiveDateTime,
     pub end_date: Option<NaiveDateTime>,
 }
+
+// 将 `WarningReason` 映射到 `WarningReasonCode`
+#[derive(Insertable)]
+#[diesel(table_name = crate::db::schema::warnings)]
+pub struct WarningInsert<'a> {
+    pub sensor_type: &'a str,
+    pub dev_ip: &'a str,
+    pub value: f64,
+    pub threshold: f64,
+    pub reason: i32,
+    pub description: &'a str,
+    pub timestamp: chrono::NaiveDateTime, // 或者使用 chrono::DateTime<Utc>
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Queryable, Selectable)]
+#[diesel(table_name =crate::db::schema::warnings)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct WarningQuery {
+    sensor_type: String,
+    dev_ip: String,
+    value: f64,
+    threshold: f64,
+    reason: i32,
+    description: String,
+    timestamp: chrono::NaiveDateTime, // 或者使用 chrono::DateTime<Utc>
+}

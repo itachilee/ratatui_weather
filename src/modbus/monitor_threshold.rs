@@ -1,10 +1,12 @@
-use chrono::{DateTime, Local};
-
 use crate::modbus::monitor_parser::SensorData;
+use chrono::{DateTime, Local};
+use std::fmt;
+use std::fmt::Debug;
+use std::fmt::Display;
 // 定义传感器类型枚举
-#[derive(Debug)]
+// #[derive(Debug)]
 pub enum SensorType {
-    Unknown,
+    Unknown = 0,
 
     // 温湿度,接入两个传感器
     TemperatureHumidity = 21,
@@ -19,13 +21,40 @@ pub enum SensorType {
     // 一氧化碳
     CarbonMonoxide = 48,
 }
+impl Display for SensorType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SensorType::Unknown => write!(f, "未知"),
+            SensorType::TemperatureHumidity => write!(f, "温湿度"),
+            SensorType::Oxygen => write!(f, "氧气"),
+            SensorType::DustConcentration => write!(f, "粉尘浓度"),
+            SensorType::WindSpeed => write!(f, "风速"),
+            SensorType::No2Sensor => write!(f, "二氧化氮"),
+            SensorType::CarbonMonoxide => write!(f, "一氧化碳"),
+        }
+    }
+}
+
+// 让 `Debug` 输出与 `Display` 一致（可选）
+impl Debug for SensorType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
 // 定义预警原因枚举
 #[derive(Debug)]
 pub enum WarningReason {
     AboveThreshold,
     BelowThreshold,
 }
-
+impl Display for WarningReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            WarningReason::AboveThreshold => write!(f, "超过阈值"),
+            WarningReason::BelowThreshold => write!(f, "低于阈值"),
+        }
+    }
+}
 // 定义预警信息结构体
 #[derive(Debug)]
 pub struct WarningInfo {
@@ -35,6 +64,21 @@ pub struct WarningInfo {
     pub threshold: f64,
     pub reason: WarningReason,
     pub timestamp: DateTime<Local>,
+}
+
+impl std::fmt::Display for WarningInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}|{}| {}传感器设备数据【{}】{}【{}】触发预警！请及时进行检查。",
+            self.timestamp,
+            self.dev_ip,
+            self.sensor_type.to_string(),
+            self.value,
+            self.reason.to_string(),
+            self.threshold,
+        )
+    }
 }
 // 定义温度传感器阈值结构体
 #[derive(Debug)]

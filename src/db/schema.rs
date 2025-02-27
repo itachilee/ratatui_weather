@@ -84,3 +84,16 @@ diesel::table! {
         end_date -> Nullable<Timestamp>,
     }
 }
+
+diesel::table! {
+    warnings (id) {
+        id -> Integer,
+        sensor_type -> Text,
+        dev_ip -> Text,
+        value -> Double,
+        threshold -> Double,
+        reason -> Integer, // 对应 WarningReason 枚举
+        description -> Text, // 对应 WarningReason 枚举
+        timestamp -> Timestamp, // 假设使用 PostgreSQL 的 timestamptz 类型
+    }
+}

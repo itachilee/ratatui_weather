@@ -1853,6 +1853,19 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    warnings (id) {
+        id -> Int4,
+        sensor_type -> Text,
+        dev_ip -> Text,
+        value -> Nullable<Float8>,
+        threshold -> Nullable<Float8>,
+        reason -> Int4,
+        desciption -> Text,
+        timestamp -> Timestamptz,
+    }
+}
+
 diesel::allow_tables_to_appear_in_same_query!(
     busbasicinfo,
     busbroadcastmanage,
@@ -1928,4 +1941,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     sysuserrole,
     syswechatpay,
     syswechatuser,
+    warnings,
 );

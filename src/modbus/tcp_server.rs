@@ -1,9 +1,12 @@
-use crate::constants::constant::{DEVTYPES, MONITORS};
+use super::monitor_threshold::SensorType;
+use crate::constants::constant::{Monitor, DEVTYPES, MONITORS};
+use crate::db::connection::POOL;
 use crate::db::models::BusDevTypeManager;
-use crate::modbus::monitor_parser::{
-    OxygenSensorParser, SensorData, SensorParser,
-};
+use crate::db::models::{WarningInsert, WarningQuery};
+use crate::modbus::monitor_parser::{OxygenSensorParser, SensorData, SensorParser};
 use crate::modbus::monitor_threshold::{handle_warning, OxygenThreshold};
+use chrono::Utc;
+use diesel::PgConnection;
 use dotenv::dotenv;
 use std::collections::HashMap;
 use std::env;
@@ -11,9 +14,6 @@ use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
-
-use super::monitor_threshold::SensorType;
-
 // 设备状态跟踪器
 #[derive(Debug, Clone)]
 struct DeviceStatusTracker {
@@ -138,16 +138,12 @@ async fn handle_connection(
                 let parser = OxygenSensorParser;
                 match process_sensor_data(&parser, &addr.ip(), data) {
                     Ok(data) => {
-                        println!("{} | 氧气传感器数据: {:?}", chrono::Local::now(), data);
                         let threshold = OxygenThreshold::new();
                         // 检查温度传感器预警
                         if let Some(warning) = handle_warning(SensorType::Oxygen, &data, &threshold)
                         {
-                            println!(
-                                "{} | 氧气传感器数据触发预警！预警信息: {:?}",
-                                chrono::Local::now(),
-                                warning
-                            );
+                            let m = Monitor;
+                            m.insert_warning(warning);
                         }
                     }
                     Err(err) => eprintln!("氧气传感器解析错误: {}", err),

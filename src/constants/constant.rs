@@ -3,12 +3,15 @@ use crate::db::models::*;
 use crate::db::schema::busdevtypemanager::dsl::*;
 use crate::db::schema::busmonitormanager::dsl::*;
 use crate::db::schema::system_security_info::dsl::*;
+use crate::db::schema::warnings::dsl::*;
+use crate::modbus::monitor_threshold::WarningInfo;
 use crate::models::PaginatedResult;
 use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Utc;
 use diesel::prelude::*;
 use diesel::result::Error::NotFound;
+use log::info;
 use once_cell::sync::Lazy;
 
 // 全局连接池实例
@@ -63,6 +66,47 @@ impl Monitor {
             }
             Err(e) => {
                 println!("Error query system security info {}", e);
+            }
+        }
+    }
+
+    pub fn insert_warning(&self, warning: WarningInfo) {
+        // let desc = format!(
+        //     "{} | 氧气传感器数据触发预警！预警信息: {:?}",
+        //     chrono::Local::now(),
+        //     warning
+        // );
+
+        let desc = warning.to_string();
+        // 准备要插入的数据
+        let warning_info = WarningInsert {
+            sensor_type: &warning.sensor_type.to_string(),
+            dev_ip: &warning.dev_ip,
+            value: warning.value,
+            threshold: warning.threshold,
+            reason: 1,
+            description: &desc,
+            timestamp: Utc::now().naive_local(), // 注意使用 UTC 时间
+        };
+
+        let conn: &mut diesel::r2d2::PooledConnection<
+            diesel::r2d2::ConnectionManager<PgConnection>,
+        > = &mut POOL
+            .get()
+            .map_err(|e| {
+                eprintln!("Failed to get database connection: {}", e);
+            })
+            .unwrap();
+
+        match diesel::insert_into(warnings)
+            .values(&warning_info)
+            .execute(conn)
+        {
+            Ok(res) => {
+                info!("insert warning info success");
+            }
+            Err(e) => {
+                info!("Error insert warning info {}", e);
             }
         }
     }
